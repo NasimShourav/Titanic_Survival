@@ -1,0 +1,115 @@
+---
+title: "Titanic Survival Predictions"
+author: "Nasim"
+date: "2023-04-13"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Install packages
+
+We are installing the required packages and libraries.
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+```{r}
+install.packages("tidyverse")
+install.packages('lubridate')
+install.packages("ggplot2")
+install.packages("stringr")
+```
+
+## Loading Libraries
+
+We are loading the required libraries here
+
+```{r loading libraries}
+library(tidyverse)  #helps wrangle data
+library(lubridate)  #helps wrangle date attributes
+library(ggplot2)  #helps visualize data
+library("stringr")
+```
+
+
+## Read CSV
+
+We are reading the dataframe here
+
+```{r read csv}
+titanic_df1 <- read_csv("C:\\D Drive\\CSE\\Data_Science\\Project\\practice\\titanic_survival\\tested.csv")
+```
+
+## Inspecting the dataframe
+
+We are using str(), summary() and head() to inspect the df
+
+```{r inspecting df}
+str(titanic_df1)
+```
+## Removing unwanted columns
+
+We are dropping columns cabin and ticket which doesn't have any impact on our analysis
+
+```{r}
+titanic_df2 <- subset(titanic_df1, select = -c(Ticket,Cabin) )
+```
+
+## Checking NA values in each column
+
+```{r NA check}
+colSums(is.na(titanic_df2))
+```
+
+## Converitng Name to First and Last Name
+
+```{r Name to First and Last name}
+titanic_df2[c('First_Name', 'Last_Name_with_Title')] <- str_split_fixed(titanic_df2$Name, ',',2)
+```
+
+## Generating Titales from Last Name
+
+To generate the title, we have to trim the whitespace from the left in column Last_Name_with_Title
+
+```{r Generating titles}
+titanic_df2$Last_Name_with_Title <- trimws(titanic_df2$Last_Name_with_Title, which = c("left"))
+
+titanic_df2[c('Title', 'Last_Name')] <- str_split_fixed(titanic_df2$Last_Name_with_Title, ' ',2)
+```
+
+## Dropping unwanted columns
+
+We are dropping the newly created unwanted columns (Last_Name_with_Title, Name) 
+
+```{r dropping columns}
+titanic_df3 <- subset(titanic_df2, select = -c(Last_Name_with_Title, Name) )
+```
+
+## Checking the df
+
+```{r group by title}
+View(titanic_df3)
+
+```
+
+## Filling NA value in age with appropriate range based on Title
+
+```{r}
+titanic_df_final <- titanic_df3 %>% group_by(Title) %>% mutate(Age = round(coalesce(Age, runif(n(), min=min(Age, na.rm=TRUE), max=max(Age, na.rm=TRUE)))))
+```
+
+
+## Removing Title Ms. 
+
+```{r}
+titanic_df_final <- titanic_df_final[titanic_df_final$Title != 'Ms.', ] 
+View(titanic_df_final)
+```
